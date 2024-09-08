@@ -214,7 +214,7 @@ kern_return_t KQueueScanContinuePatch_stop(kmod_info_t *ki, void *d)
 
 void dummyFunc64Lion() {
         // Add a bunch of nops so there is enough dead space in your func
-#if __LP64__
+#ifdef __LP64__
         __inline_asm("nop");
         __inline_asm("nop");
         __inline_asm("nop");
@@ -235,5 +235,5 @@ void dummyFunc64Lion() {
         __inline_asm("je         0x55671b"); //original
         __inline_asm("cmp        dword [ss:ebp+var_20], 0x0"); // new
         __inline_asm("je         0x55671b"); //new, but simply a jump after check for the fp variable.
-#end
+#endif
 }
