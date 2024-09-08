@@ -14,6 +14,7 @@
 		CE12005A2C8E38D200AA81FB /* injectCheckPre108.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = injectCheckPre108.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE12005D2C8E38D200AA81FB /* injectCheckPre108.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = injectCheckPre108.c; sourceTree = "<group>"; };
 		CE12005F2C8E38D200AA81FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CE1200652C8E457700AA81FB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -30,6 +31,7 @@
 		CE1200502C8E38D200AA81FB = {
 			isa = PBXGroup;
 			children = (
+				CE1200652C8E457700AA81FB /* README.md */,
 				CE12005C2C8E38D200AA81FB /* injectCheckPre108 */,
 				CE12005B2C8E38D200AA81FB /* Products */,
 			);
