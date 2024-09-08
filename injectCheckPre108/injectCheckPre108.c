@@ -40,22 +40,22 @@ static vm_offset_t possible_kqueue_scan_continue_panic_end_locations[NUM_SUPPORT
 #endif
 };
 
-static char possible_search_bytes[NUM_SUPPORTED_KERNELS][30] = {
+static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 #if __LP64__
   //10.7.5 11G63, xnu-1699.32.7
   {
-    0x42, 0x8A, 0x0C, 0x38, // mov  cl, byte [ds:rax+r15]
+    0x42, 0x8A, 0x0C, 0x38, //mov   cl, byte [ds:rax+r15]
   },
 #else
   //10.7.5 11G63, xnu-1699.32.7 (32 bit)
   {
-    0x89, 0x4c, 0x24, 0x04,                   //mov        cl, byte [ds:eax+esi],
+    0x89, 0x4c, 0x24, 0x04, //mov   cl, byte [ds:eax+esi]
   },
 #endif
 };
 
-static char possible_replacement_bytes[NUM_SUPPORTED_KERNELS][7] = {
-  {0xEA, 0x00, 0x00, 0x00, 0x00},                        // jmp [abs] (gotta figure out address of deadspace
+static char possible_replacement_bytes[NUM_SUPPORTED_KERNELS][9] = {
+  {0xEA, 0x00, 0x00, 0x00},                        // jmp [abs] (gotta figure out address of deadspace
 };
 
 
@@ -216,6 +216,10 @@ void dummyFuncLion() {
         __inline_asm("je         0xffffff8000536a12"); //original
         __inline_asm("cmp        dword [ss:rbp+var_44], 0x0"); // new
         __inline_asm("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
 #else
         // Add a bunch of nops so there is enough dead space in your func
         __inline_asm("nop");
@@ -227,5 +231,9 @@ void dummyFuncLion() {
         __inline_asm("je         0x55671b"); //original
         __inline_asm("cmp        dword [ss:ebp+var_20], 0x0"); // new
         __inline_asm("je         0x55671b"); //new, but simply a jump after check for the fp variable.
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
 #endif
 }
