@@ -55,15 +55,7 @@ static char possible_search_bytes[NUM_SUPPORTED_KERNELS][30] = {
 };
 
 static char possible_replacement_bytes[NUM_SUPPORTED_KERNELS][7] = {
-#if __LP64__
-  {0x8A, 0x0C, 0x30, 0x00},        // mov rbx,0x9        | 10.7.5 11G63, xnu-1699.32.7
-  {0x41, 0xbd, 0x09, 0x00, 0x00, 0x00, 0x90},        // mov r13d,0x9 | 10.8.4 12F2560, xnu-2050.48.19
-  {0x41, 0xbc, 0x09, 0x00, 0x00, 0x00, 0x90},        // mov r12d,0x9 | 10.9.5 13F1911, xnu-2422.115.15
-  {0x41, 0xbd, 0x09, 0x00, 0x00, 0x00, 0x90},        // mov r13d,0x9        | 10.9.5 Bronya-Ryzen
-  {0x41, 0xbc, 0x09, 0x00, 0x00, 0x00, 0x90},        // mov r12d,0x9 | 10.9.5 IPCA
-#else
-  {0xbe, 0x09, 0x00, 0x00, 0x00, 0x90, 0x90},        // mov esi,0x9        | 10.7.5 11G63, xnu-1699.32.7 (32 bit)
-#endif
+  {0xEA, 0x00, 0x00, 0x00, 0x00},                        // jmp [abs] (gotta figure out address of deadspace
 };
 
 
@@ -212,7 +204,7 @@ kern_return_t KQueueScanContinuePatch_stop(kmod_info_t *ki, void *d)
   return KERN_SUCCESS;
 }
 
-void dummyFunc64Lion() {
+void dummyFuncLion() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
         __inline_asm("nop");
