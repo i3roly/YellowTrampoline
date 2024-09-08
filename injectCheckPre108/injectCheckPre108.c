@@ -212,11 +212,28 @@ kern_return_t KQueueScanContinuePatch_stop(kmod_info_t *ki, void *d)
   return KERN_SUCCESS;
 }
 
-void dummyFunc() {
- // Add a bunch of nops so there is enough dead space in your func
- __inline_asm("nop");
- __inline_asm("nop");
- __inline_asm("nop");
+void dummyFunc64Lion() {
+        // Add a bunch of nops so there is enough dead space in your func
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("test       r12, r12"); //new
+        __inline_asm("mov        cl, byte [ds:rax+r15]"); //original
+        __inline_asm("je         0xffffff8000536a12"); //original
+        __inline_asm("cmp        dword [ss:rbp+var_44], 0x0"); // new
+        __inline_asm("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
         
 }
 
+void dummyFunc32Lion() {
+        // Add a bunch of nops so there is enough dead space in your func
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("nop");
+        __inline_asm("test       ebx, ebx"); //new
+        __inline_asm("mov        cl, byte [ds:eax+esi]"); //original
+        __inline_asm("je         0x55671b"); //original
+        __inline_asm("cmp        dword [ss:ebp+var_20], 0x0"); // new
+        __inline_asm("je         0x55671b"); //new, but simply a jump after check for the fp variable.
+        
+}
