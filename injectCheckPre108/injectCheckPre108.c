@@ -11,21 +11,27 @@
 void dummyFuncLion() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+
+        __asm__(".intel_syntax \t\n"
+                "test       r12, r12"); //new
+        __asm__(".intel_syntax \t\n"
+                "mov        cl, byte ptr ds:[rax+r15]"); //original
         
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        IOLog("%s: Success\n", __func__);
-        //        __asm__("test       %r12, %r12"); //new
-        //        __asm__("mov        cl, byte [ds:rax+r15]"); //original
-        //        __asm__("je         0xffffff8000536a12"); //original
-        //        __asm__("cmp        dword [ss:rbp+var_44], 0x0"); // new
-        //        __asm__("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
+        __asm__(".intel_syntax \t\n"
+                "je         [0xffffff8000536a12]"); //original
+
+        __asm__(".intel_syntax noprefix\t\n"
+                "cmp      dword ptr ss:[rbp + var_44], 0x0"); // new
+        __asm__(".intel_syntax \t\n"
+                "je         [0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -50,6 +56,8 @@ void dummyFuncLion() {
         __asm__("nop");
         __asm__("nop");
 #endif
+        IOLog("%s: Success\n", __func__);
+        
 }
 
 kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
