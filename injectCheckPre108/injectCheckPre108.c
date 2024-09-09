@@ -67,52 +67,6 @@ static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 //        {0x00, 0x00, 0x00, 0x00},                        // jmp [abs] (gotta figure out address of deadspace
 //};
 //
-
-
-
-void dummyFuncLion() {
-        // Add a bunch of nops so there is enough dead space in your func
-#ifdef __LP64__
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        IOLog("Success\n");
-        //        __asm__("test       %r12, %r12"); //new
-        //        __asm__("mov        cl, byte [ds:rax+r15]"); //original
-        //        __asm__("je         0xffffff8000536a12"); //original
-        //        __asm__("cmp        dword [ss:rbp+var_44], 0x0"); // new
-        //        __asm__("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-#else
-        // Add a bunch of nops so there is enough dead space in your func
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("test       ebx, ebx"); //new
-        __asm__("mov        cl, byte [ds:eax+esi]"); //original
-        __asm__("je         0x55671b"); //original
-        __asm__("cmp        dword [ss:ebp+var_20], 0x0"); // new
-        __asm__("je         0x55671b"); //new, but simply a jump after check for the fp variable.
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-#endif
-}
-
 boolean_t write_protection_is_enabled() {
         return (get_cr0() & CR0_WP) != 0;
 }
@@ -205,6 +159,51 @@ static vm_offset_t get_kernel_base() {
 #else
         // No 32-bit XNU kernels have KASLR
         return 0;
+#endif
+}
+
+
+void dummyFuncLion() {
+        // Add a bunch of nops so there is enough dead space in your func
+#ifdef __LP64__
+        
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        IOLog("Success\n");
+        //        __asm__("test       %r12, %r12"); //new
+        //        __asm__("mov        cl, byte [ds:rax+r15]"); //original
+        //        __asm__("je         0xffffff8000536a12"); //original
+        //        __asm__("cmp        dword [ss:rbp+var_44], 0x0"); // new
+        //        __asm__("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+#else
+        // Add a bunch of nops so there is enough dead space in your func
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("test       ebx, ebx"); //new
+        __asm__("mov        cl, byte [ds:eax+esi]"); //original
+        __asm__("je         0x55671b"); //original
+        __asm__("cmp        dword [ss:ebp+var_20], 0x0"); // new
+        __asm__("je         0x55671b"); //new, but simply a jump after check for the fp variable.
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
 #endif
 }
 
