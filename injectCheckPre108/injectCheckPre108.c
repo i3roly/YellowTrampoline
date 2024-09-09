@@ -24,10 +24,8 @@ void dummyFuncLion() {
                 "test       r12, r12"); //new
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[rax+r15]"); //original
-        
         __asm__(".intel_syntax \t\n"
                 "je         [0xffffff8000536a12]"); //original
-
         __asm__(".intel_syntax noprefix\t\n"
                 "cmp      dword ptr ss:[rbp + var_44], 0x0"); // new
         __asm__(".intel_syntax \t\n"
@@ -46,11 +44,16 @@ void dummyFuncLion() {
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
-        __asm__("test       ebx, ebx"); //new
-        __asm__("mov        cl, byte [ds:eax+esi]"); //original
-        __asm__("je         0x55671b"); //original
-        __asm__("cmp        dword [ss:ebp+var_20], 0x0"); // new
-        __asm__("je         0x55671b"); //new, but simply a jump after check for the fp variable.
+        __asm__(".intel_syntax \t\n"
+                "test       ebx, ebx"); //new
+        __asm__(".intel_syntax \t\n"
+                "mov        cl, byte ptr ds:[eax+esi]"); //original
+        __asm__(".intel_syntax \t\n"
+                "je         [0x55671b]"); //original
+        __asm__(".intel_syntax \t\n"
+                "cmp        dword ptr ss:[ebp+var_20], 0x0"); // new
+        __asm__(".intel_syntax \t\n"
+                "je         [0x55671b]"); //new, but simply a jump after check for the fp variable.
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
