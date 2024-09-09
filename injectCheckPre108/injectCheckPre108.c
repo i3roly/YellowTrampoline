@@ -64,6 +64,7 @@ static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 void dummyFuncLion() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
+        IOLog("success\n");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -139,8 +140,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         char search_bytes[sizeof(possible_search_bytes[0])];
         char replacement_bytes[9];
         uint8_t *kscpb = NULL;
-        int i;
-        for (i = 0; i < LENGTH(possible_kqueue_scan_continue_panic_start_locations); i++) {
+        for (int i = 0; i < LENGTH(possible_kqueue_scan_continue_panic_start_locations); i++) {
                 kqueue_scan_continue_panic_start_location = kernel_base + possible_kqueue_scan_continue_panic_start_locations[i];
                 kqueue_scan_continue_panic_end_location = kernel_base + possible_kqueue_scan_continue_panic_end_locations[i];
                 memcpy(search_bytes, possible_search_bytes[i], sizeof(search_bytes));
@@ -204,7 +204,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         //commence memory rewriting
         IOLog("KQueueScanContinuePatch: Jumping to Dummy function\n");
         long long funcAddr = (long long) &dummyFuncLion;
-        long long pcDelta = funcAddr - i;
+        long long pcDelta = funcAddr;
         replacement_bytes[0] = 0xE9;
         memcpy(&replacement_bytes + 1, pcDelta, sizeof(pcDelta));
         IOLog("Value is %llx\n", pcDelta);
