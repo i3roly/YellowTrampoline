@@ -70,9 +70,9 @@ void dummyFuncLion() {
         __asm__("nop");
         __asm__("nop");
 //        __asm__("test       %r12, %r12"); //new
-////        __asm__("mov        cl, byte [ds:rax+r15]"); //original
+//        __asm__("mov        cl, byte [ds:rax+r15]"); //original
 //        __asm__("je         0xffffff8000536a12"); //original
-////        __asm__("cmp        dword [ss:rbp+var_44], 0x0"); // new
+//        __asm__("cmp        dword [ss:rbp+var_44], 0x0"); // new
 //        __asm__("je         0xffffff8000536a12"); //new, but simply a jump after check for the fp variable.
 //        __asm__("nop");
 //        __asm__("nop");
@@ -138,7 +138,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         vm_offset_t kqueue_scan_continue_panic_start_location = 0;
         vm_offset_t kqueue_scan_continue_panic_end_location = 0;
         char search_bytes[sizeof(possible_search_bytes[0])];
-        char replacement_bytes[9];
+        char replacement_bytes[10];
         uint8_t *kscpb = NULL;
         for (int i = 0; i < LENGTH(possible_kqueue_scan_continue_panic_start_locations); i++) {
                 kqueue_scan_continue_panic_start_location = kernel_base + possible_kqueue_scan_continue_panic_start_locations[i];
@@ -204,12 +204,18 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         //commence memory rewriting
         IOLog("KQueueScanContinuePatch: Jumping to Dummy function\n");
         long long funcAddr = (long long) &dummyFuncLion;
-        long long pcDelta = funcAddr;
-        replacement_bytes[0] = 0xE9;
-        memcpy(&replacement_bytes + 1, pcDelta, sizeof(pcDelta));
+        IOLog("KQueueScanContinuePatch: funcAddr: %llx\n", funcAddr);
+        IOLog("KQueueScanContinuePatch: current %llx\n", 0xffffff80005369ef);
+        long long pcDelta = 0xffffff80005369ef - funcAddr;
         IOLog("Value is %llx\n", pcDelta);
+        memset(&replacement_bytes[0], 0xE9, 1);
+        memcpy(&replacement_bytes[0] + 1, &pcDelta, sizeof(pcDelta));
+        //effectively wiping out the 3 lines with this jump (since replacement_bytes is 10 bytes):
+        //ffffff80005369ef         mov        cl, byte [ds:rax+r15]
+        //ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
+        //ffffff80005369f7         je         0xffffff8000536a12
         memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
-//        memset((void *)kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes), 0x90 /*nop*/, extra_space_to_fill);
+       // memset((void *)kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes), 0x90 /*nop*/, extra_space_to_fill);
 
         //conclude memory rewriting
         
@@ -242,5 +248,6 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
 kern_return_t injectCheckPre108_stop(kmod_info_t *ki, void *d)
 {
         IOLog("KQueueScanContinuePatch STOP\n");
+        //__asm__("jmp         0xffffff8000536a12");
         return KERN_SUCCESS;
 }
