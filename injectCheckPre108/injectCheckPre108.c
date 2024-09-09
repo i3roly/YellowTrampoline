@@ -66,6 +66,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
                 //memcpy(replacement_bytes, possible_replacement_bytes[i], sizeof(replacement_bytes));
                 
                 kscpb = (uint8_t*) kqueue_scan_continue_panic_start_location;
+                originAddress = kqueue_scan_continue_panic_start_location;
                 if (memcmp(kscpb, search_bytes, sizeof(search_bytes)) == 0) {
                         break;
                 }
@@ -98,8 +99,8 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         IOLog("%s: Jumping to Dummy function\n", __func__);
         long long funcAddr = (long long) &dummyFuncLion;
         IOLog("%s: funcAddr: %llx\n", __func__, funcAddr);
-        IOLog("%s: current %llx\n", __func__, 0xffffff80005369ef);
-        long long pcDelta = funcAddr - 0xffffff80005369ef;
+        IOLog("%s: current %llx\n", __func__, originAddress);
+        long long pcDelta = funcAddr - originAddress;
         IOLog("%s: Value is %llx\n", __func__, pcDelta);
         // presumably have to subtract 5 bytes to save/offset something in the counter,
         // since https://defuse.ca/online-x86-assembler.htm decodes to an address that

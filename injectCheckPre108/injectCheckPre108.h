@@ -70,7 +70,7 @@ char original_bytes[10];
 boolean_t interrupt_status = 0;
 boolean_t write_protection_status = 0;
 uint8_t *kscpb = NULL;
-
+long long originAddress;
 
 // Taken from Hopper
 #endif /* injectCheckPre108_h */
