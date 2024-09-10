@@ -26,7 +26,6 @@ static void injectInstructions() {
                 "mov        cl, byte ptr ds:[rax+r15]"); //original
         __asm__(".intel_syntax \t\n"
                 "je         [0xffffff8000536a12]"); //original
-        
         /* ffffff8000536771         mov        dword [ss:rbp+var_44], esi
          *
          * ^ this line tells us esi is the source for dword [ss:rbp+var_44].
@@ -39,6 +38,7 @@ static void injectInstructions() {
                 "cmp      esi, 0x0"); // new
         __asm__(".intel_syntax \t\n"
                 "je         [0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
+
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -53,23 +53,33 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
-        /* 005566df         mov        dword [ss:ebp+var_20], eax
-         *
-         source of destination is eax, also unchanged between above
-         * and below line, so use eax
-         *
-         * 00556702         cmp        dword [ss:ebp+var_20], 0x0
-         */
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        
         __asm__(".intel_syntax \t\n"
                 "test       ebx, ebx"); //new
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
         __asm__(".intel_syntax \t\n"
                 "je         [0x55671b]"); //original
+        /* 005566df         mov        dword [ss:ebp+var_20], eax
+         *
+         * source of destination is eax, also unchanged between above
+         * and below line, so use eax
+         *
+         * 00556702         cmp        dword [ss:ebp+var_20], 0x0
+         */
         __asm__(".intel_syntax \t\n"
                 "cmp        dword ptr eax, 0x0"); // new
         __asm__(".intel_syntax \t\n"
                 "je         [0x55671b]"); //new, but simply a jump after check for the fp variable.
+        
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
+        __asm__("nop");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -129,9 +139,10 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
         long long pcDelta = funcAddr - originAddress;
         IOLog("injectCheckPre108::%s: Value is %llx\n", __func__, pcDelta);
-        // presumably have to subtract 5 bytes to save/offset something in the counter,
-        // since https://defuse.ca/online-x86-assembler.htm decodes to an address that
-        // seems to add 5 bytes to the address
+        /* presumably have to subtract 5 bytes to save/offset something in the counter,
+         * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
+         * seems to add 5 bytes to the address
+         */
         pcDelta -= 5;
         //save original bytes first
         memcpy(&original_bytes[0], (void *)kqueue_scan_continue_panic_start_location, sizeof(original_bytes));
@@ -139,12 +150,14 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         //create new jmp asm instruction.
         memset(&replacement_bytes[0], 0xE9, 1);
         memcpy(&replacement_bytes[1], &pcDelta, sizeof(pcDelta));
-        //effectively wiping out the 3 lines with this jump (since replacement_bytes is 10 bytes):
-        //ffffff80005369ef         mov        cl, byte [ds:rax+r15]
-        //ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
-        //ffffff80005369f7         je         0xffffff8000536a12
+        /*
+         * effectively wiping out the 3 lines with this jump (since replacement_bytes is 10 bytes):
+         *
+         *  ffffff80005369ef         mov        cl, byte [ds:rax+r15]
+         *  ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
+         *  ffffff80005369f7         je         0xffffff8000536a12
+         */
         memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
-        // memset((void *)kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes), 0x90 /*nop*/, extra_space_to_fill);
         
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
