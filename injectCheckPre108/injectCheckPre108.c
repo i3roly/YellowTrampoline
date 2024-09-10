@@ -28,15 +28,15 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr [rax+r15]"); //original
         __asm__(".intel_syntax \t\n"
-                "je         [0x1b]"); //original
-        __asm__(".intel_syntax noprefix\t\n"
+                "je         [0x1e]"); //original
+        __asm__(".intel_syntax\t\n"
                 "cmp      dword ptr [rbp-0x44], 0x0"); // new
         __asm__(".intel_syntax \t\n"
-                "je         [0x1b]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x1e]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
-        __asm__(".intel_syntax \t\n"
-                "jmp        [0x0A]");
+        __asm__(".intel_syntax noprefix\t\n"
+                "jmp        [rip+0x05]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -61,15 +61,15 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
         __asm__(".intel_syntax \t\n"
-                "je         [0x19]"); //original
+                "je         [0x1B]"); //original
         __asm__(".intel_syntax \t\n"
                 "cmp        dword ptr [ebp-0x20], 0x0"); // new
         __asm__(".intel_syntax \t\n"
-                "je         [0x19]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x1B]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
-        __asm__(".intel_syntax \t\n"
-                "jmp        [0x09]");
+        __asm__(".intel_syntax noprefix \t\n"
+                "jmp        [rip+0x04]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -161,8 +161,8 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         
         IOLog("injectCheckPre108::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
-        long long pcDelta = (funcAddr + byteCount) - originAddress;
-        IOLog("injectCheckPre108::%s: Value is %llx\n", __func__, pcDelta);
+        uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
+        IOLog("injectCheckPre108::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
          * seems to add 5 bytes to the address
@@ -172,6 +172,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         memcpy(&original_bytes[0], (void *)kqueue_scan_continue_panic_start_location, sizeof(original_bytes));
         
         //create new jmp asm instruction.
+        memset(&replacement_bytes[0], 0x90, sizeof(replacement_bytes));
         memset(&replacement_bytes[0], 0xE9, 1);
         memcpy(&replacement_bytes[1], &pcDelta, sizeof(pcDelta));
         
@@ -198,15 +199,15 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
 
 kern_return_t injectCheckPre108_stop(kmod_info_t *ki, void *d)
 {
-        IOLog("injectCheckPre108::%s: STOP\n", __func__);
         //should write back the old shit.
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
         memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
-        IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
-        for (int k=0; k < 39; k ++)
-                IOLog(" %02x", kscpb[k]);
-        IOLog(" %02x\n", kscpb[39]);
+//        IOLog("injectCheckPre108::%s: STOP\n", __func__);
+//        IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+//        for (int k=0; k < 39; k ++)
+//                IOLog(" %02x", kscpb[k]);
+//        IOLog(" %02x\n", kscpb[39]);
         
         //__asm__("jmp         0xffffff8000536a12");
         return KERN_SUCCESS;
