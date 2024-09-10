@@ -26,25 +26,17 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "test       r12, r12"); //new
         __asm__(".intel_syntax \t\n"
-                "mov        cl, byte ptr ds:[rax+r15]"); //original
+                "mov        cl, byte ptr [rax+r15]"); //original
         __asm__(".intel_syntax \t\n"
-                "je         [0xffffff8000536a12]"); //original
-        /* ffffff8000536771         mov        dword [ss:rbp+var_44], esi
-         *
-         * ^ this line tells us esi is the source for dword [ss:rbp+var_44].
-         * since esi is not a destination between the instructions above and
-         * on the next line (which we need for our rewrite), it has what we need
-         *
-         * ffffff80005367e8         cmp        dword [ss:rbp+var_44], 0x0
-         */
+                "je         [0x1b]"); //original
         __asm__(".intel_syntax noprefix\t\n"
-                "cmp      esi, 0x0"); // new
+                "cmp      dword ptr [rbp-0x44], 0x0"); // new
         __asm__(".intel_syntax \t\n"
-                "je         [0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x1b]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__(".intel_syntax \t\n"
-                "jmp        [0xffffff80005369f9]");
+                "jmp        [0x0A]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -69,22 +61,15 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
         __asm__(".intel_syntax \t\n"
-                "je         [0x55671b]"); //original
-        /* 005566df         mov        dword [ss:ebp+var_20], eax
-         *
-         * source of destination is eax, also unchanged between above
-         * and below line, so use eax
-         *
-         * 00556702         cmp        dword [ss:ebp+var_20], 0x0
-         */
+                "je         [0x19]"); //original
         __asm__(".intel_syntax \t\n"
-                "cmp        dword ptr eax, 0x0"); // new
+                "cmp        dword ptr [ebp-0x20], 0x0"); // new
         __asm__(".intel_syntax \t\n"
-                "je         [0x55671b]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x19]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__(".intel_syntax \t\n"
-                "jmp        [0x00556704]");
+                "jmp        [0x09]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
