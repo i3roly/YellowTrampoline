@@ -8,7 +8,7 @@
 #include "injectCheckPre108.h"
 #include "helperFn.c"
 
-void injectInstructions() {
+static void injectInstructions() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
         __asm__("nop");

@@ -1,4 +1,4 @@
-boolean_t write_protection_is_enabled() {
+static boolean_t write_protection_is_enabled() {
         return (get_cr0() & CR0_WP) != 0;
 }
 

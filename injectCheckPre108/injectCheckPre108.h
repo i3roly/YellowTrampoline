@@ -1,11 +1,9 @@
 //
-//  injectCheckPre108.h
-//  injectCheckPre108
+//  KQueueScanContinuePatch.c
+//  KQueueScanContinuePatch
 //
-//  Created by Gagan on 2024-09-09.
-//  Copyright © 2024 gagz. All rights reserved.
+//  Created by Wowfunhappy with assistance from krackers.
 //
-
 #ifndef injectCheckPre108_h
 #define injectCheckPre108_h
 
@@ -62,15 +60,15 @@ static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 //
 
 static size_t KASLRAlignment = 0x100000;
-vm_offset_t kernel_base;
-vm_offset_t kqueue_scan_continue_panic_start_location = 0;
-vm_offset_t kqueue_scan_continue_panic_end_location = 0;
-char replacement_bytes[10];
-char original_bytes[10];
-boolean_t interrupt_status = 0;
-boolean_t write_protection_status = 0;
-uint8_t *kscpb = NULL;
-long long originAddress;
+static vm_offset_t kernel_base;
+static vm_offset_t kqueue_scan_continue_panic_start_location = 0;
+static vm_offset_t kqueue_scan_continue_panic_end_location = 0;
+static char replacement_bytes[10];
+static char original_bytes[10];
+static boolean_t interrupt_status = 0;
+static boolean_t write_protection_status = 0;
+static uint8_t *kscpb = NULL;
+static long long originAddress;
 
 // Taken from Hopper
 #endif /* injectCheckPre108_h */
