@@ -135,9 +135,16 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         //commence memory rewriting
         IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
         long long funcAddr = (long long) &injectInstructions;
-        IOLog("injectCheckPre108::%s: funcAddr: %llx\n", __func__, funcAddr);
+        functionStartAfterPrologue = &injectInstructions;
+        while (true) {
+           if (*functionStartAfterPrologue == 0x90 && functionStartAfterPrologue[1] == 0x90) // 2 nops in a row, we're probably after the prologue
+                break;
+           functionStartAfterPrologue += 1;
+        }
+
+        IOLog("injectCheckPre108::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, &functionStartAfterPrologue);
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
-        long long pcDelta = funcAddr - originAddress;
+        long long pcDelta = ((long long) &functionStartAfterPrologue) - originAddress;
         IOLog("injectCheckPre108::%s: Value is %llx\n", __func__, pcDelta);
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
@@ -150,6 +157,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         //create new jmp asm instruction.
         memset(&replacement_bytes[0], 0xE9, 1);
         memcpy(&replacement_bytes[1], &pcDelta, sizeof(pcDelta));
+        
         /*
          * effectively wiping out the 3 lines with this jump (since replacement_bytes is 10 bytes):
          *

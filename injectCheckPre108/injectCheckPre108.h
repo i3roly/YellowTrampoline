@@ -69,6 +69,6 @@ static boolean_t interrupt_status = 0;
 static boolean_t write_protection_status = 0;
 static uint8_t *kscpb = NULL;
 static long long originAddress;
-
+uint8_t *functionStartAfterPrologue;
 // Taken from Hopper
 #endif /* injectCheckPre108_h */
