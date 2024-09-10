@@ -19,7 +19,10 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
-
+        //IOLog("injectCheckPre108::%s: Success\n", __func__);
+#ifdef DEBUG
+        __builtin_trap();
+#endif
         __asm__(".intel_syntax \t\n"
                 "test       r12, r12"); //new
         __asm__(".intel_syntax \t\n"
@@ -38,7 +41,10 @@ static void injectInstructions() {
                 "cmp      esi, 0x0"); // new
         __asm__(".intel_syntax \t\n"
                 "je         [0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
-
+        
+        //jump back if these checks are both false.
+        __asm__(".intel_syntax \t\n"
+                "jmp        [0xffffff80005369f9]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -76,6 +82,9 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "je         [0x55671b]"); //new, but simply a jump after check for the fp variable.
         
+        //jump back if these checks are both false.
+        __asm__(".intel_syntax \t\n"
+                "jmp        [0x00556704]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -85,7 +94,6 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
 #endif
-        IOLog("injectCheckPre108::%s: Success\n", __func__);
         
 }
 
@@ -131,20 +139,44 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         if(disableInterruptsAndProtection(interrupt_status, write_protection_status) == KERN_FAILURE)
                 return KERN_FAILURE;
         
+        long long funcAddr = (long long) &injectInstructions;
+        
+        uint8_t *matchOpCodeBytes = (uint8_t*) &injectInstructions;
+        long long byteCount = 0;
+        
+#ifdef DEBUG
+        /*The DEBUG macro inserts an invalid opcode trap
+         * to verify we have jumped to the right function
+         */
+        while (true) {
+                
+                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+                if (*matchOpCodeBytes == 0x0F && matchOpCodeBytes[1] == 0x0B) // 2 nops in a row, we're probably after the prologue
+                        break;
+                matchOpCodeBytes += 1;
+                byteCount += 1;
+        }
+        IOLog("injectCheckPre108::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
+#endif
+        
         
         //commence memory rewriting
         IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
-        long long funcAddr = (long long) &injectInstructions;
-        functionStartAfterPrologue = &injectInstructions;
+        matchOpCodeBytes = (uint8_t*)  &injectInstructions;
+        byteCount = 0;
         while (true) {
-           if (*functionStartAfterPrologue == 0x90 && functionStartAfterPrologue[1] == 0x90) // 2 nops in a row, we're probably after the prologue
-                break;
-           functionStartAfterPrologue += 1;
+#ifdef DEBUG
+                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+#endif
+                if (*matchOpCodeBytes == (unsigned char) 0x90 && matchOpCodeBytes[1] == (unsigned char) 0x90) // 2 nops in a row, we're probably after the prologue
+                        break;
+                matchOpCodeBytes += 1;
+                byteCount += 1;
         }
-
-        IOLog("injectCheckPre108::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, &functionStartAfterPrologue);
+        
+        IOLog("injectCheckPre108::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
-        long long pcDelta = ((long long) &functionStartAfterPrologue) - originAddress;
+        long long pcDelta = (funcAddr + byteCount) - originAddress;
         IOLog("injectCheckPre108::%s: Value is %llx\n", __func__, pcDelta);
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
