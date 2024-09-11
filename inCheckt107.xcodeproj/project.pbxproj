@@ -12,7 +12,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CE12005A2C8E38D200AA81FB /* injectCheckPre108.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = injectCheckPre108.kext; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE12005A2C8E38D200AA81FB /* inCheckt107.kext */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = inCheckt107.kext; sourceTree = BUILT_PRODUCTS_DIR; };
 		CE12005D2C8E38D200AA81FB /* injectCheckPre108.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = injectCheckPre108.c; sourceTree = "<group>"; };
 		CE12005F2C8E38D200AA81FB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		CE1200652C8E457700AA81FB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -53,7 +53,7 @@
 		CE12005B2C8E38D200AA81FB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				CE12005A2C8E38D200AA81FB /* injectCheckPre108.kext */,
+				CE12005A2C8E38D200AA81FB /* inCheckt107.kext */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -93,9 +93,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		CE1200592C8E38D200AA81FB /* injectCheckPre108 */ = {
+		CE1200592C8E38D200AA81FB /* inCheckt107 */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = CE1200622C8E38D200AA81FB /* Build configuration list for PBXNativeTarget "injectCheckPre108" */;
+			buildConfigurationList = CE1200622C8E38D200AA81FB /* Build configuration list for PBXNativeTarget "inCheckt107" */;
 			buildPhases = (
 				CE1200552C8E38D200AA81FB /* Headers */,
 				CE1200562C8E38D200AA81FB /* Sources */,
@@ -106,9 +106,9 @@
 			);
 			dependencies = (
 			);
-			name = injectCheckPre108;
+			name = inCheckt107;
 			productName = injectCheckPre108;
-			productReference = CE12005A2C8E38D200AA81FB /* injectCheckPre108.kext */;
+			productReference = CE12005A2C8E38D200AA81FB /* inCheckt107.kext */;
 			productType = "com.apple.product-type.kernel-extension";
 		};
 /* End PBXNativeTarget section */
@@ -125,7 +125,7 @@
 					};
 				};
 			};
-			buildConfigurationList = CE1200542C8E38D200AA81FB /* Build configuration list for PBXProject "injectCheckPre108" */;
+			buildConfigurationList = CE1200542C8E38D200AA81FB /* Build configuration list for PBXProject "inCheckt107" */;
 			compatibilityVersion = "Xcode 9.3";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -138,7 +138,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				CE1200592C8E38D200AA81FB /* injectCheckPre108 */,
+				CE1200592C8E38D200AA81FB /* inCheckt107 */,
 			);
 		};
 /* End PBXProject section */
@@ -310,7 +310,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		CE1200542C8E38D200AA81FB /* Build configuration list for PBXProject "injectCheckPre108" */ = {
+		CE1200542C8E38D200AA81FB /* Build configuration list for PBXProject "inCheckt107" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE1200602C8E38D200AA81FB /* Debug */,
@@ -319,7 +319,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		CE1200622C8E38D200AA81FB /* Build configuration list for PBXNativeTarget "injectCheckPre108" */ = {
+		CE1200622C8E38D200AA81FB /* Build configuration list for PBXNativeTarget "inCheckt107" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				CE1200632C8E38D200AA81FB /* Debug */,
