@@ -107,7 +107,7 @@
 			dependencies = (
 			);
 			name = inCheckt107;
-			productName = injectCheckPre108;
+			productName = inCheckt107;
 			productReference = CE12005A2C8E38D200AA81FB /* inCheckt107.kext */;
 			productType = "com.apple.product-type.kernel-extension";
 		};
@@ -281,12 +281,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = injectCheckPre108/Info.plist;
-				MODULE_NAME = com.gagz.gfy.goredskins.injectCheckPre108;
-				MODULE_START = injectCheckPre108_start;
-				MODULE_STOP = injectCheckPre108_stop;
+				INFOPLIST_FILE = inCheckt107/Info.plist;
+				MODULE_NAME = com.gagz.gfy.goredskins.inCheckt107;
+				MODULE_START = inCheckt107_start;
+				MODULE_STOP = inCheckt107_stop;
 				MODULE_VERSION = 1.0.0d1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gagz.gfy.goredskins.injectCheckPre108;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gagz.gfy.goredskins.inCheckt107;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = kext;
 			};
@@ -296,12 +296,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				INFOPLIST_FILE = injectCheckPre108/Info.plist;
-				MODULE_NAME = com.gagz.gfy.goredskins.injectCheckPre108;
-				MODULE_START = injectCheckPre108_start;
-				MODULE_STOP = injectCheckPre108_stop;
+				INFOPLIST_FILE = inCheckt107/Info.plist;
+				MODULE_NAME = com.gagz.gfy.goredskins.inCheckt107;
+				MODULE_START = inCheckt107_start;
+				MODULE_STOP = inCheckt107_stop;
 				MODULE_VERSION = 1.0.0d1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.gagz.gfy.goredskins.injectCheckPre108;
+				PRODUCT_BUNDLE_IDENTIFIER = com.gagz.gfy.goredskins.inCheckt107;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = kext;
 			};
