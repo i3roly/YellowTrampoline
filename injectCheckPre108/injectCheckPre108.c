@@ -20,26 +20,28 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
         //IOLog("injectCheckPre108::%s: Success\n", __func__);
-#ifdef DEBUG
+#ifdef INSERT_TRAP
         __builtin_trap();
 #endif
+        
         __asm__(".intel_syntax \t\n"
                 "test       r12, r12"); //new
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr [rax+r15]"); //original
         __asm__("je0:");
         __asm__(".intel_syntax \t\n"
-                "je         [je0 - 0x8000536a12]"); //original
+                "je         [0x90]"); //original
+        
         __asm__(".intel_syntax\t\n"
                 "cmp      dword ptr [rbp-0x44], 0x0"); // new
         __asm__("je1:");
         __asm__(".intel_syntax \t\n"
-                "je         [je1 - 0x8000536a12]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x90]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__("jmp0:");
         __asm__(".intel_syntax noprefix\t\n"
-                "jmp        [0xffffff80005369f9]");
+                "jmp        [0xffffff90909090]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -65,17 +67,17 @@ static void injectInstructions() {
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
         __asm__("je0:");
         __asm__(".intel_syntax \t\n"
-                "je         [je1relativeaddress]"); //original
+                "je         [0x90]"); //original
         __asm__(".intel_syntax \t\n"
                 "cmp        dword ptr [ebp-0x20], 0x0"); // new
         __asm__("je1:");
         __asm__(".intel_syntax \t\n"
-                "je         [je1relativeaddress]"); //new, but simply a jump after check for the fp variable.
+                "je         [0x90]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__("jmp0:");
         __asm__(".intel_syntax noprefix \t\n"
-                "jmp        [jmp0relativeaddress]");
+                "jmp        [0x90]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -88,11 +90,20 @@ static void injectInstructions() {
         
 }
 
-static void computeRelativeAddresses() {
-        //this isn't right, but just trying to get a feel of what in eed to do.
-        //will need greater care selecting registers
+static void computeRelativeAddressesAndOverwrite() {
+        
+        /* the point of this function is to calculate the relative address from the
+         * memory locations given by the labels je0, je1, jmp0, which the compiler will
+         * insert through the clever stackexchange post found by @krackers.
+         * we now overwrite the compiled trampoline jmp/je dummy addresses with the real ones
+         * that we find using inline asm.
+         * addresses are correct now.
+         */
+
         int64_t absAddr = 0;
 #ifdef DEBUG
+        //ensure that the label of je0 printed here is in agreement with the
+        //debug print loop that prints 128 bytes of memory starting at the trampoline function.
         asm ("movabs $je0, %0 \n\t"
              : "=r" (absAddr)
              );
@@ -101,35 +112,51 @@ static void computeRelativeAddresses() {
 #endif
         
         asm ("movabs $je0, %0 \n\t"
-             "sub %1, %0 \n\t"
              : "=r" (absAddr)
-             : "r" (0xffffff8000536a12)
              );
+        absAddr = 0xffffff8000536a12 - (absAddr + 5);
         je0_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("injectCheckPre108::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
 #endif
         absAddr = 0;
         asm ("movabs $je1, %0 \n\t"
-             "sub %1, %0 \n\t"
              : "=r" (absAddr)
-             : "r" (0xffffff8000536a12)
              );
+        absAddr = 0xffffff8000536a12 - (absAddr + 5);
         je1_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("injectCheckPre108::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
 #endif
-        
         absAddr = 0;
         asm ("movabs $jmp0, %0 \n\t"
-             "sub %1, %0 \n\t"
              : "=r" (absAddr)
-             : "r" (0xffffff80005369f9)
              );
+        absAddr = 0xffffff80005369f9 - (absAddr + 5);
         jmp0_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("injectCheckPre108::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
 #endif
+        
+        //commence overwriting
+        
+        int count = 0;
+        uint8_t *matchOpCodeBytes =  (uint8_t*) &injectInstructions;
+        for (int k=0; k<64;k++) {
+                //  IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
+                if(matchOpCodeBytes[k] == 0x0f && matchOpCodeBytes[k+1] == 0x84 && !count) {
+                        memcpy(&matchOpCodeBytes[k]+2, &je0_rel, sizeof(je0_rel));
+                        count++;
+                }
+                else if(matchOpCodeBytes[k] == 0x0f && matchOpCodeBytes[k+1] == 0x84 && count == 1){
+                        memcpy(&matchOpCodeBytes[k]+2, &je1_rel, sizeof(je1_rel));
+                        count++;
+                }
+                else if(matchOpCodeBytes[k] == 0xe9 && count == 2) {
+                        memcpy(&matchOpCodeBytes[k]+1, &jmp0_rel, sizeof(jmp0_rel));
+                        count++;
+                }
+        }
         
 }
 kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
@@ -179,34 +206,31 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         uint8_t *matchOpCodeBytes = (uint8_t*) &injectInstructions;
         long long byteCount = 0;
         
-#ifdef DEBUG
         /*The DEBUG macro inserts an invalid opcode trap
          * to verify we have jumped to the right function
          */
+#ifdef INSERT_TRAP
         while (true) {
                 
                 IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
-                if (*matchOpCodeBytes == 0x0F && matchOpCodeBytes[1] == 0x0B) // 2 nops in a row, we're probably after the prologue
+                if (*matchOpCodeBytes == 0x0F && matchOpCodeBytes[1] == 0x0B) // 0x0F 0x0B is a trap code
                         break;
                 matchOpCodeBytes += 1;
                 byteCount += 1;
         }
         IOLog("injectCheckPre108::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
+        byteCount = 0;
 #endif
-
-#ifdef DEBUG
-        // this is to print the raw opcodes (probably way way past) of the trampoline
-        // it allows you to verify the opcodes at the memory address are going to
-        // agree with the label addresses from the computeRelativeAddresses section
-        for (int k=0; k<128;k++) {
-                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
-                byteCount += 1;
-        }
-#endif
-        //the point of this function is to calculate the relative address from the memory locations given by the labels je0, je1, jmp0, which the compiler will insert through the clever stackexchange post found by @krackers
-        //at this point we should be confident the relative addresses are correct, but i could be wrong.
-        computeRelativeAddresses();
         
+#ifdef DEBUG
+        TheLadyIsATramp(funcAddr, "BEFORE");
+#endif
+        
+        computeRelativeAddressesAndOverwrite();
+        
+#ifdef DEBUG
+        TheLadyIsATramp(funcAddr, "AFTER");
+#endif
         //commence memory rewriting
         IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
         matchOpCodeBytes = (uint8_t*)  &injectInstructions;
@@ -248,7 +272,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
          *  ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
          *  ffffff80005369f7         je         0xffffff8000536a12
          */
-        // memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
+        memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
         
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
@@ -268,12 +292,12 @@ kern_return_t injectCheckPre108_stop(kmod_info_t *ki, void *d)
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
         memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
-        //        IOLog("injectCheckPre108::%s: STOP\n", __func__);
-        //        IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
-        //        for (int k=0; k < 39; k ++)
-        //                IOLog(" %02x", kscpb[k]);
-        //        IOLog(" %02x\n", kscpb[39]);
-        
-        //__asm__("jmp         0xffffff8000536a12");
+        IOLog("injectCheckPre108::%s: STOP\n", __func__);
+#ifdef DEBUG
+                IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+                for (int k=0; k < 39; k ++)
+                        IOLog(" %02x", kscpb[k]);
+                IOLog(" %02x\n", kscpb[39]);
+#endif
         return KERN_SUCCESS;
 }
