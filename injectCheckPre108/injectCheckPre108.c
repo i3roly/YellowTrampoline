@@ -91,30 +91,46 @@ static void injectInstructions() {
 static void computeRelativeAddresses() {
         //this isn't right, but just trying to get a feel of what in eed to do.
         //will need greater care selecting registers
+        int64_t absAddr = 0;
+#ifdef DEBUG
+        asm ("movabs $je0, %0 \n\t"
+             : "=r" (absAddr)
+             );
+        IOLog("injectCheckPre108::%s: je0 absolute: %llx\n", __func__, absAddr);
+        absAddr = 0;
+#endif
         
-        //je0
-        asm(".intel_syntax noprefix \t\n"
-            "movabs rax, je0");
-        asm(".intel_syntax noprefix \t\n"
-            "movabs r15, 0xffffff8000536a12"); //0xffffff8000536a12 is our destination for the je
-        asm(".intel_syntax noprefix \t\n"
-            "sub rax, r15"); //should have our relative address. need to store this safely.
+        asm ("movabs $je0, %0 \n\t"
+             "sub %1, %0 \n\t"
+             : "=r" (absAddr)
+             : "r" (0xffffff8000536a12)
+             );
+        je0_rel = (int32_t) absAddr;
+#ifdef DEBUG
+        IOLog("injectCheckPre108::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
+#endif
+        absAddr = 0;
+        asm ("movabs $je1, %0 \n\t"
+             "sub %1, %0 \n\t"
+             : "=r" (absAddr)
+             : "r" (0xffffff8000536a12)
+             );
+        je1_rel = (int32_t) absAddr;
+#ifdef DEBUG
+        IOLog("injectCheckPre108::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
+#endif
         
-        //je1
-        asm(".intel_syntax noprefix \t\n"
-            "movabs rax, je1");
-        asm(".intel_syntax noprefix \t\n"
-            "movabs r15, 0xffffff8000536a12"); //0xffffff8000536a12 is our destination for the je
-        asm(".intel_syntax noprefix \t\n"
-            "sub rax, r15"); //should have our relative address. need to store this safely.
+        absAddr = 0;
+        asm ("movabs $jmp0, %0 \n\t"
+             "sub %1, %0 \n\t"
+             : "=r" (absAddr)
+             : "r" (0xffffff80005369f9)
+             );
+        jmp0_rel = (int32_t) absAddr;
+#ifdef DEBUG
+        IOLog("injectCheckPre108::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
+#endif
         
-        //jmp works for absolute, but may as well play it safe.
-        asm(".intel_syntax noprefix \t\n"
-            "movabs rax, jmp0");
-        asm(".intel_syntax noprefix \t\n"
-            "movabs r15, 0xffffff80005369f9"); //ffffff80005369f9 is our destination for the jmp
-        asm(".intel_syntax noprefix \t\n"
-            "sub rax, r15"); //should have our relative address. need to store this safely.
 }
 kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
 {
@@ -177,11 +193,19 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         }
         IOLog("injectCheckPre108::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
 #endif
-        for (int k=0; k<64;k++) {
-                
+
+#ifdef DEBUG
+        // this is to print the raw opcodes (probably way way past) of the trampoline
+        // it allows you to verify the opcodes at the memory address are going to
+        // agree with the label addresses from the computeRelativeAddresses section
+        for (int k=0; k<128;k++) {
                 IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
                 byteCount += 1;
         }
+#endif
+        //the point of this function is to calculate the relative address from the memory locations given by the labels je0, je1, jmp0, which the compiler will insert through the clever stackexchange post found by @krackers
+        //at this point we should be confident the relative addresses are correct, but i could be wrong.
+        computeRelativeAddresses();
         
         //commence memory rewriting
         IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
@@ -201,9 +225,9 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
         uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
         IOLog("injectCheckPre108::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
-
-        computeRelativeAddresses();
-
+        
+        
+        
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
          * seems to add 5 bytes to the address
@@ -224,7 +248,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
          *  ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
          *  ffffff80005369f7         je         0xffffff8000536a12
          */
-       // memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
+        // memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
         
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
@@ -244,11 +268,11 @@ kern_return_t injectCheckPre108_stop(kmod_info_t *ki, void *d)
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
         memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
-//        IOLog("injectCheckPre108::%s: STOP\n", __func__);
-//        IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
-//        for (int k=0; k < 39; k ++)
-//                IOLog(" %02x", kscpb[k]);
-//        IOLog(" %02x\n", kscpb[39]);
+        //        IOLog("injectCheckPre108::%s: STOP\n", __func__);
+        //        IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+        //        for (int k=0; k < 39; k ++)
+        //                IOLog(" %02x", kscpb[k]);
+        //        IOLog(" %02x\n", kscpb[39]);
         
         //__asm__("jmp         0xffffff8000536a12");
         return KERN_SUCCESS;
