@@ -71,7 +71,8 @@ static uint8_t *kscpb = NULL;
 static long long originAddress;
 extern char je0[];
 extern char je1[];
-static const void *foo_addresses[] = { &je0[0], &je1[0] };
+extern char jmp0[];
+static const void *je_addresses[] = { &je0[0], &je1[0], &jmp0[0]};
 
 // Taken from Hopper
 #endif /* injectCheckPre108_h */

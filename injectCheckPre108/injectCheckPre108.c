@@ -29,16 +29,17 @@ static void injectInstructions() {
                 "mov        cl, byte ptr [rax+r15]"); //original
         __asm__("je0:");
         __asm__(".intel_syntax \t\n"
-                "je         [je0 - 0xffffff8000536a12]"); //original
+                "je         [je0 - 0x8000536a12]"); //original
         __asm__(".intel_syntax\t\n"
                 "cmp      dword ptr [rbp-0x44], 0x0"); // new
         __asm__("je1:");
         __asm__(".intel_syntax \t\n"
-                "je         [je1 - 0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
+                "je         [je1 - 0x8000536a12]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
+        __asm__("jmp0:");
         __asm__(".intel_syntax noprefix\t\n"
-                "jmp        [rip+0x05]");
+                "jmp        [0xffffff80005369f9]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -62,16 +63,19 @@ static void injectInstructions() {
                 "test       ebx, ebx"); //new
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
+        __asm__("je0:");
         __asm__(".intel_syntax \t\n"
-                "je         [rip+0x1B]"); //original
+                "je         [je1relativeaddress]"); //original
         __asm__(".intel_syntax \t\n"
                 "cmp        dword ptr [ebp-0x20], 0x0"); // new
+        __asm__("je1:");
         __asm__(".intel_syntax \t\n"
-                "je         [rip+0x1B]"); //new, but simply a jump after check for the fp variable.
+                "je         [je1relativeaddress]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
+        __asm__("jmp0:");
         __asm__(".intel_syntax noprefix \t\n"
-                "jmp        [rip+0x04]");
+                "jmp        [jmp0relativeaddress]");
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
@@ -84,6 +88,34 @@ static void injectInstructions() {
         
 }
 
+static void computeRelativeAddresses() {
+        //this isn't right, but just trying to get a feel of what in eed to do.
+        //will need greater care selecting registers
+        
+        //je0
+        asm(".intel_syntax noprefix \t\n"
+            "movabs rax, je0");
+        asm(".intel_syntax noprefix \t\n"
+            "movabs r15, 0xffffff8000536a12"); //0xffffff8000536a12 is our destination for the je
+        asm(".intel_syntax noprefix \t\n"
+            "sub rax, r15"); //should have our relative address. need to store this safely.
+        
+        //je1
+        asm(".intel_syntax noprefix \t\n"
+            "movabs rax, je1");
+        asm(".intel_syntax noprefix \t\n"
+            "movabs r15, 0xffffff8000536a12"); //0xffffff8000536a12 is our destination for the je
+        asm(".intel_syntax noprefix \t\n"
+            "sub rax, r15"); //should have our relative address. need to store this safely.
+        
+        //jmp works for absolute, but may as well play it safe.
+        asm(".intel_syntax noprefix \t\n"
+            "movabs rax, jmp0");
+        asm(".intel_syntax noprefix \t\n"
+            "movabs r15, 0xffffff80005369f9"); //ffffff80005369f9 is our destination for the jmp
+        asm(".intel_syntax noprefix \t\n"
+            "sub rax, r15"); //should have our relative address. need to store this safely.
+}
 kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
 {
         IOLog("injectCheckPre108::%s: START\n", __func__);
@@ -145,7 +177,11 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         }
         IOLog("injectCheckPre108::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
 #endif
-        
+        for (int k=0; k<64;k++) {
+                
+                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
+                byteCount += 1;
+        }
         
         //commence memory rewriting
         IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
@@ -165,6 +201,9 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
         uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
         IOLog("injectCheckPre108::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
+
+        computeRelativeAddresses();
+
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
          * seems to add 5 bytes to the address
@@ -185,7 +224,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
          *  ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
          *  ffffff80005369f7         je         0xffffff8000536a12
          */
-        memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
+       // memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
         
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
