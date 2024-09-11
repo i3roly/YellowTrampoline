@@ -5,7 +5,7 @@
 //  Created by Wowfunhappy with assistance from krackers.
 //
 
-#include "injectCheckPre108.h"
+#include "inCheckt107.h"
 #include "helperFn.c"
 
 static void injectInstructions() {
@@ -19,7 +19,7 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
-        //IOLog("injectCheckPre108::%s: Success\n", __func__);
+        //IOLog("inCheckt107::%s: Success\n", __func__);
 #ifdef INSERT_TRAP
         __builtin_trap();
 #endif
@@ -107,7 +107,7 @@ static void computeRelativeAddressesAndOverwrite() {
         asm ("movabs $je0, %0 \n\t"
              : "=r" (absAddr)
              );
-        IOLog("injectCheckPre108::%s: je0 absolute: %llx\n", __func__, absAddr);
+        IOLog("inCheckt107::%s: je0 absolute: %llx\n", __func__, absAddr);
         absAddr = 0;
 #endif
         
@@ -117,7 +117,7 @@ static void computeRelativeAddressesAndOverwrite() {
         absAddr = 0xffffff8000536a12 - (absAddr + 5);
         je0_rel = (int32_t) absAddr;
 #ifdef DEBUG
-        IOLog("injectCheckPre108::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
+        IOLog("inCheckt107::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
 #endif
         absAddr = 0;
         asm ("movabs $je1, %0 \n\t"
@@ -126,7 +126,7 @@ static void computeRelativeAddressesAndOverwrite() {
         absAddr = 0xffffff8000536a12 - (absAddr + 5);
         je1_rel = (int32_t) absAddr;
 #ifdef DEBUG
-        IOLog("injectCheckPre108::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
+        IOLog("inCheckt107::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
 #endif
         absAddr = 0;
         asm ("movabs $jmp0, %0 \n\t"
@@ -135,7 +135,7 @@ static void computeRelativeAddressesAndOverwrite() {
         absAddr = 0xffffff80005369f9 - (absAddr + 5);
         jmp0_rel = (int32_t) absAddr;
 #ifdef DEBUG
-        IOLog("injectCheckPre108::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
+        IOLog("inCheckt107::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
 #endif
         
         //commence overwriting
@@ -143,7 +143,7 @@ static void computeRelativeAddressesAndOverwrite() {
         int count = 0;
         uint8_t *matchOpCodeBytes =  (uint8_t*) &injectInstructions;
         for (int k=0; k<64;k++) {
-                //  IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
+                //  IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
                 if(matchOpCodeBytes[k] == 0x0f && matchOpCodeBytes[k+1] == 0x84 && !count) {
                         memcpy(&matchOpCodeBytes[k]+2, &je0_rel, sizeof(je0_rel));
                         count++;
@@ -159,9 +159,9 @@ static void computeRelativeAddressesAndOverwrite() {
         }
         
 }
-kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
+kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
 {
-        IOLog("injectCheckPre108::%s: START\n", __func__);
+        IOLog("inCheckt107::%s: START\n", __func__);
         kernel_base = get_kernel_base();
         char search_bytes[sizeof(possible_search_bytes[0])];
         
@@ -178,12 +178,12 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
                         break;
                 }
                 if (i == LENGTH(possible_kqueue_scan_continue_panic_start_locations) - 1) {
-                        IOLog("injectCheckPre108::%s: Memory region not found. You are probably using an unsupported kernel, or your kernel has already been patched.\n", __func__);
+                        IOLog("inCheckt107::%s: Memory region not found. You are probably using an unsupported kernel, or your kernel has already been patched.\n", __func__);
                         return KERN_FAILURE;
                 }
         }
         
-        IOLog("injectCheckPre108::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
+        IOLog("inCheckt107::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
@@ -191,7 +191,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         unsigned long extra_space_to_fill = kqueue_scan_continue_panic_end_location - kqueue_scan_continue_panic_start_location - sizeof(replacement_bytes);
         
         if (kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location) {
-                IOLog("injectCheckPre108::%s: kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location\n", __func__);
+                IOLog("inCheckt107::%s: kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location\n", __func__);
                 return KERN_FAILURE;
         }
         
@@ -212,13 +212,13 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
 #ifdef INSERT_TRAP
         while (true) {
                 
-                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+                IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
                 if (*matchOpCodeBytes == 0x0F && matchOpCodeBytes[1] == 0x0B) // 0x0F 0x0B is a trap code
                         break;
                 matchOpCodeBytes += 1;
                 byteCount += 1;
         }
-        IOLog("injectCheckPre108::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
+        IOLog("inCheckt107::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
         byteCount = 0;
 #endif
         
@@ -232,12 +232,12 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         TheLadyIsATramp(funcAddr, "AFTER");
 #endif
         //commence memory rewriting
-        IOLog("injectCheckPre108::%s: Jumping to Dummy function\n", __func__);
+        IOLog("inCheckt107::%s: Jumping to Dummy function\n", __func__);
         matchOpCodeBytes = (uint8_t*)  &injectInstructions;
         byteCount = 0;
         while (true) {
 #ifdef DEBUG
-                IOLog("injectCheckPre108::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+                IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
 #endif
                 if (*matchOpCodeBytes == (unsigned char) 0x90 && matchOpCodeBytes[1] == (unsigned char) 0x90) // 2 nops in a row, we're probably after the prologue
                         break;
@@ -245,10 +245,10 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
                 byteCount += 1;
         }
         
-        IOLog("injectCheckPre108::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
-        IOLog("injectCheckPre108::%s: current %llx\n", __func__, originAddress);
+        IOLog("inCheckt107::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
+        IOLog("inCheckt107::%s: current %llx\n", __func__, originAddress);
         uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
-        IOLog("injectCheckPre108::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
+        IOLog("inCheckt107::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
         
         
         
@@ -278,7 +278,7 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
         
         
-        IOLog("injectCheckPre108::%s: Post-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
+        IOLog("inCheckt107::%s: Post-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
@@ -286,15 +286,15 @@ kern_return_t injectCheckPre108_start(kmod_info_t * ki, void *d)
         return KERN_SUCCESS;
 }
 
-kern_return_t injectCheckPre108_stop(kmod_info_t *ki, void *d)
+kern_return_t inCheckt107_stop(kmod_info_t *ki, void *d)
 {
         //should write back the old shit.
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
         memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
-        IOLog("injectCheckPre108::%s: STOP\n", __func__);
+        IOLog("inCheckt107::%s: STOP\n", __func__);
 #ifdef DEBUG
-                IOLog("injectCheckPre108::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+                IOLog("inCheckt107::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
                 for (int k=0; k < 39; k ++)
                         IOLog(" %02x", kscpb[k]);
                 IOLog(" %02x\n", kscpb[39]);

@@ -4,8 +4,8 @@
 //
 //  Created by Wowfunhappy with assistance from krackers.
 //
-#ifndef injectCheckPre108_h
-#define injectCheckPre108_h
+#ifndef inCheckt107_h
+#define inCheckt107_h
 
 #include <IOKit/IOLib.h>
 #include <mach-o/loader.h>
@@ -76,4 +76,4 @@ static const void *je_addresses[] = { &je0[0], &je1[0], &jmp0[0]};
 int32_t je0_rel, je1_rel, jmp0_rel;
 // Taken from Hopper
 
-#endif /* injectCheckPre108_h */
+#endif /* inCheckt107_h */
