@@ -69,5 +69,9 @@ static boolean_t interrupt_status = 0;
 static boolean_t write_protection_status = 0;
 static uint8_t *kscpb = NULL;
 static long long originAddress;
+extern char je0[];
+extern char je1[];
+static const void *foo_addresses[] = { &je0[0], &je1[0] };
+
 // Taken from Hopper
 #endif /* injectCheckPre108_h */

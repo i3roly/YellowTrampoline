@@ -27,12 +27,14 @@ static void injectInstructions() {
                 "test       r12, r12"); //new
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr [rax+r15]"); //original
+        __asm__("je0:");
         __asm__(".intel_syntax \t\n"
-                "je         [0x1e]"); //original
+                "je         [je0 - 0xffffff8000536a12]"); //original
         __asm__(".intel_syntax\t\n"
                 "cmp      dword ptr [rbp-0x44], 0x0"); // new
+        __asm__("je1:");
         __asm__(".intel_syntax \t\n"
-                "je         [0x1e]"); //new, but simply a jump after check for the fp variable.
+                "je         [je1 - 0xffffff8000536a12]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__(".intel_syntax noprefix\t\n"
@@ -61,11 +63,11 @@ static void injectInstructions() {
         __asm__(".intel_syntax \t\n"
                 "mov        cl, byte ptr ds:[eax+esi]"); //original
         __asm__(".intel_syntax \t\n"
-                "je         [0x1B]"); //original
+                "je         [rip+0x1B]"); //original
         __asm__(".intel_syntax \t\n"
                 "cmp        dword ptr [ebp-0x20], 0x0"); // new
         __asm__(".intel_syntax \t\n"
-                "je         [0x1B]"); //new, but simply a jump after check for the fp variable.
+                "je         [rip+0x1B]"); //new, but simply a jump after check for the fp variable.
         
         //jump back if these checks are both false.
         __asm__(".intel_syntax noprefix \t\n"
