@@ -92,6 +92,7 @@ static vm_offset_t get_kernel_base() {
         return 0;
 #endif
 }
+
 static void injectInstructions(void);
 static void TheLadyIsATramp (long long TrampsHomePhone, char *where) {
         //The TrampsHomePhone is the starting address of the Tramp
