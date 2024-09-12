@@ -69,10 +69,6 @@ static boolean_t interrupt_status = 0;
 static boolean_t write_protection_status = 0;
 static uint8_t *kscpb = NULL;
 static long long originAddress;
-extern char je0[];
-extern char je1[];
-extern char jmp0[];
-static const void *je_addresses[] = { &je0[0], &je1[0], &jmp0[0]};
 int32_t je0_rel, je1_rel, jmp0_rel;
 // Taken from Hopper
 
