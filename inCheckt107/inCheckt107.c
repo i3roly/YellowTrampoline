@@ -8,7 +8,6 @@
 #include "inCheckt107.h"
 #include "helperFn.c"
 
-
 static void injectInstructions() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
@@ -172,13 +171,30 @@ static void computeRelativeAddressesAndOverwrite() {
         }
         
 }
+
 kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
 {
-//        if(__builtin_available(macOS 10.7, *)) {
-//        IOLog("inCheckt107:: System is Mountain Lion or newer. Extension not required.");
-//                return KERN_ABORTED;
-//        }
-        IOLog("inCheckt107::%s: START\n", __func__);
+        char kernelVersion[128];
+        size_t kernelVersionStringLength = 128;
+        sysctlbyname("kern.osrelease", &kernelVersion, &kernelVersionStringLength, NULL, 0);
+        //"unsafe bla blah bla" fucking sue me. APPUL makes the simplest shit SO FUCKING HARD SERIOUSLY
+        //read this lol: https://stackoverflow.com/questions/11072804
+        //over thirty fucking years and these guys couldn't develop a consistent approach from day one?
+        if(strlen(kernelVersion)) {
+                //well, this is why i say "unsafe bla bla bla"!
+                //      G F Y.
+                //    GO REDSKINS
+                int kernelMayja;
+                sscanf(kernelVersion, "%d.%*d.%*d", &kernelMayja);
+                if(kernelMayja > 11) {
+                        IOLog("inCheckt107:: System is Mountain Lion or newer. Extension not required.");
+                        return KERN_ABORTED;
+                } else
+                        IOLog("inCheckt107:: Lion or lower detected %s (Mayja %d). STARTING\n", kernelVersion, kernelMayja);
+        } else {
+                IOLog("inCheckt107:: Could not get operating system version, terminating.");
+                return KERN_ABORTED;
+        }
         kernel_base = get_kernel_base();
         char search_bytes[sizeof(possible_search_bytes[0])];
         
@@ -263,7 +279,7 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                 byteCount += 1;
         }
         uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
-
+        
 #ifdef DEBUG
         IOLog("inCheckt107::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
         IOLog("inCheckt107::%s: current %llx\n", __func__, originAddress);
@@ -313,10 +329,10 @@ kern_return_t inCheckt107_stop(kmod_info_t *ki, void *d)
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
         IOLog("inCheckt107::%s: STOP\n", __func__);
 #ifdef DEBUG
-                IOLog("inCheckt107::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
-                for (int k=0; k < 39; k ++)
-                        IOLog(" %02x", kscpb[k]);
-                IOLog(" %02x\n", kscpb[39]);
+        IOLog("inCheckt107::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+        for (int k=0; k < 39; k ++)
+                IOLog(" %02x", kscpb[k]);
+        IOLog(" %02x\n", kscpb[39]);
 #endif
         return KERN_SUCCESS;
 }

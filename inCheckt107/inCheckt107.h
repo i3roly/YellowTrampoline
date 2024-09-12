@@ -6,11 +6,9 @@
 //
 #ifndef inCheckt107_h
 #define inCheckt107_h
-
-#include <IOKit/IOLib.h>
-#include <mach-o/loader.h>
 #include <i386/proc_reg.h>
-#include <string.h>
+#include <mach-o/loader.h>
+#include <IOKit/IOLib.h>
 
 #if __LP64__
 #define NUM_SUPPORTED_KERNELS 1
@@ -71,5 +69,8 @@ static uint8_t *kscpb = NULL;
 static long long originAddress;
 int32_t je0_rel, je1_rel, jmp0_rel;
 // Taken from Hopper
+
+extern void IOLog(const char *format, ...)
+__attribute__((format(printf, 1, 2)));
 
 #endif /* inCheckt107_h */
