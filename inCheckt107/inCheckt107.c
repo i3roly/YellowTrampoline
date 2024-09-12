@@ -182,11 +182,12 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                         return KERN_FAILURE;
                 }
         }
-        
+#ifdef DEBUG
         IOLog("inCheckt107::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
+#endif
         
         unsigned long extra_space_to_fill = kqueue_scan_continue_panic_end_location - kqueue_scan_continue_panic_start_location - sizeof(replacement_bytes);
         
@@ -244,13 +245,13 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                 matchOpCodeBytes += 1;
                 byteCount += 1;
         }
-        
+        uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
+
+#ifdef DEBUG
         IOLog("inCheckt107::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
         IOLog("inCheckt107::%s: current %llx\n", __func__, originAddress);
-        uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
         IOLog("inCheckt107::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
-        
-        
+#endif
         
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
          * since https://defuse.ca/online-x86-assembler.htm decodes to an address that
@@ -277,11 +278,12 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
         
-        
+#ifdef DEBUG
         IOLog("inCheckt107::%s: Post-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
+#endif
         
         return KERN_SUCCESS;
 }
