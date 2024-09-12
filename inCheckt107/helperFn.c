@@ -94,13 +94,13 @@ static vm_offset_t get_kernel_base() {
 }
 
 static void injectInstructions(void);
-static void TheLadyIsATramp (long long TrampsHomePhone, char *where) {
+static void TheLadyIsAVamp (long long VampsHomePhone, char *where) {
         //The TrampsHomePhone is the starting address of the Tramp
         //just an easy way to print the contents
         long long byteCount = 0;
         uint8_t *matchOpCodeBytes =  (uint8_t*) &injectInstructions;
         for (int k=0; k<64;k++) {
-                IOLog("inCheckt107::%s:: %s %llx %02x\n", __func__, where, TrampsHomePhone + byteCount, matchOpCodeBytes[k]);
+                IOLog("inCheckt107::%s:: %s %llx %02x\n", __func__, where, VampsHomePhone + byteCount, matchOpCodeBytes[k]);
                 byteCount += 1;
                 
         }

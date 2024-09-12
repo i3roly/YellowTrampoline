@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		CE12005E2C8E38D200AA81FB /* inCheckt107.c in Sources */ = {isa = PBXBuildFile; fileRef = CE12005D2C8E38D200AA81FB /* inCheckt107.c */; };
 		CE1200732C8F68EF00AA81FB /* inCheckt107.h in Headers */ = {isa = PBXBuildFile; fileRef = CE1200722C8F68C600AA81FB /* inCheckt107.h */; };
+		CE43C1162C937B9E00B582A8 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE43C1152C937B9E00B582A8 /* CoreFoundation.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -18,12 +19,12 @@
 		CE1200652C8E457700AA81FB /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		CE1200672C8E63D300AA81FB /* Kernel.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Kernel.framework; path = System/Library/Frameworks/Kernel.framework; sourceTree = SDKROOT; };
 		CE1200692C8E63D800AA81FB /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = System/Library/Frameworks/IOKit.framework; sourceTree = SDKROOT; };
-		CE1200702C8E705100AA81FB /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		CE1200722C8F68C600AA81FB /* inCheckt107.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = inCheckt107.h; sourceTree = "<group>"; };
 		CE1200742C8F694200AA81FB /* helperFn.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = helperFn.c; sourceTree = "<group>"; };
 		CE1200772C91070900AA81FB /* patched_fdexec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = patched_fdexec.md; sourceTree = "<group>"; };
 		CE1200782C91070900AA81FB /* unmodified_fdexec.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = unmodified_fdexec.md; sourceTree = "<group>"; };
 		CE12007A2C910B5500AA81FB /* fdexec_diff.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = fdexec_diff.md; sourceTree = SOURCE_ROOT; };
+		CE43C1152C937B9E00B582A8 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +32,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CE43C1162C937B9E00B582A8 /* CoreFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,7 +74,7 @@
 		CE1200662C8E63D300AA81FB /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				CE1200702C8E705100AA81FB /* CoreFoundation.framework */,
+				CE43C1152C937B9E00B582A8 /* CoreFoundation.framework */,
 				CE1200692C8E63D800AA81FB /* IOKit.framework */,
 				CE1200672C8E63D300AA81FB /* Kernel.framework */,
 			);
@@ -169,6 +171,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLY_RULES_IN_COPY_HEADERS = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -280,8 +283,12 @@
 		CE1200632C8E38D200AA81FB /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
+				GCC_USE_STANDARD_INCLUDE_SEARCHING = NO;
 				INFOPLIST_FILE = inCheckt107/Info.plist;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				MODULE_NAME = com.gagz.gfy.goredskins.inCheckt107;
 				MODULE_START = inCheckt107_start;
 				MODULE_STOP = inCheckt107_stop;
@@ -295,7 +302,10 @@
 		CE1200642C8E38D200AA81FB /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
+				GCC_USE_STANDARD_INCLUDE_SEARCHING = NO;
 				INFOPLIST_FILE = inCheckt107/Info.plist;
 				MODULE_NAME = com.gagz.gfy.goredskins.inCheckt107;
 				MODULE_START = inCheckt107_start;

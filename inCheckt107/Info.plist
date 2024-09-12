@@ -23,11 +23,11 @@
 	<key>OSBundleLibraries</key>
 	<dict>
 		<key>com.apple.kpi.unsupported</key>
-		<string>10.0.0</string>
+		<string>11.4.2</string>
 		<key>com.apple.kpi.libkern</key>
-		<string>10.0.0</string>
+		<string>8.0.0d2</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>10.0.0</string>
+		<string>11.4.2</string>
 	</dict>
 </dict>
 </plist>

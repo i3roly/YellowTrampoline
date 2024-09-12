@@ -8,6 +8,7 @@
 #include "inCheckt107.h"
 #include "helperFn.c"
 
+
 static void injectInstructions() {
         // Add a bunch of nops so there is enough dead space in your func
 #ifdef __LP64__
@@ -114,7 +115,11 @@ static void computeRelativeAddressesAndOverwrite() {
         asm ("movabs $je0, %0 \n\t"
              : "=r" (absAddr)
              );
+#ifdef __LP64__
         absAddr = 0xffffff8000536a12 - (absAddr + 5);
+#else
+        absAddr = 0x55671b - (absAddr + 5);
+#endif
         je0_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("inCheckt107::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
@@ -123,7 +128,11 @@ static void computeRelativeAddressesAndOverwrite() {
         asm ("movabs $je1, %0 \n\t"
              : "=r" (absAddr)
              );
+#ifdef __LP64__
         absAddr = 0xffffff8000536a12 - (absAddr + 5);
+#else
+        absAddr = 0x55671b - (absAddr + 5);
+#endif
         je1_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("inCheckt107::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
@@ -132,7 +141,11 @@ static void computeRelativeAddressesAndOverwrite() {
         asm ("movabs $jmp0, %0 \n\t"
              : "=r" (absAddr)
              );
+#ifdef __LP64__
         absAddr = 0xffffff80005369f9 - (absAddr + 5);
+#else
+        absAddr = 0x00556704 - (absAddr + 5);
+#endif
         jmp0_rel = (int32_t) absAddr;
 #ifdef DEBUG
         IOLog("inCheckt107::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
@@ -161,6 +174,10 @@ static void computeRelativeAddressesAndOverwrite() {
 }
 kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
 {
+//        if(__builtin_available(macOS 10.7, *)) {
+//        IOLog("inCheckt107:: System is Mountain Lion or newer. Extension not required.");
+//                return KERN_ABORTED;
+//        }
         IOLog("inCheckt107::%s: START\n", __func__);
         kernel_base = get_kernel_base();
         char search_bytes[sizeof(possible_search_bytes[0])];
@@ -224,13 +241,13 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
 #endif
         
 #ifdef DEBUG
-        TheLadyIsATramp(funcAddr, "BEFORE");
+        TheLadyIsAVamp(funcAddr, "BEFORE");
 #endif
         
         computeRelativeAddressesAndOverwrite();
         
 #ifdef DEBUG
-        TheLadyIsATramp(funcAddr, "AFTER");
+        TheLadyIsAVamp(funcAddr, "AFTER");
 #endif
         //commence memory rewriting
         IOLog("inCheckt107::%s: Jumping to Dummy function\n", __func__);
