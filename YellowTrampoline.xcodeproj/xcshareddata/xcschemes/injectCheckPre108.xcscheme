@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "CE1200592C8E38D200AA81FB"
-               BuildableName = "inCheckt107.kext"
-               BlueprintName = "inCheckt107"
-               ReferencedContainer = "container:inCheckt107.xcodeproj">
+               BuildableName = "YellowTrampoline.kext"
+               BlueprintName = "YellowTrampoline"
+               ReferencedContainer = "container:YellowTrampoline.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -51,9 +51,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "CE1200592C8E38D200AA81FB"
-            BuildableName = "inCheckt107.kext"
-            BlueprintName = "inCheckt107"
-            ReferencedContainer = "container:inCheckt107.xcodeproj">
+            BuildableName = "YellowTrampoline.kext"
+            BlueprintName = "YellowTrampoline"
+            ReferencedContainer = "container:YellowTrampoline.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>

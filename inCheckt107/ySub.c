@@ -5,7 +5,7 @@
 //  Created by Wowfunhappy with assistance from krackers.
 //
 
-#include "inCheckt107.h"
+#include "ySub.h"
 #include "helperFn.c"
 
 static void injectInstructions() {
@@ -19,7 +19,7 @@ static void injectInstructions() {
         __asm__("nop");
         __asm__("nop");
         __asm__("nop");
-        //IOLog("inCheckt107::%s: Success\n", __func__);
+        //IOLog("YellowTrampoline::%s: Success\n", __func__);
 #ifdef INSERT_TRAP
         __builtin_trap();
 #endif
@@ -91,7 +91,22 @@ static void injectInstructions() {
 }
 
 static void computeRelativeAddressesAndOverwrite() {
-        
+
+#ifdef __LP64__
+        int64_t je_abs, jmp_abs;
+#else
+        int32_t je_abs, jmp_abs;
+#endif
+        int count = 0;
+         for (int k=0; k<64;k++) {
+                 if(count==1)
+                         break;
+                 if(kscpb[k] == 0x74 && !count) {
+                         je_abs = (&kscpb[k+2] + kscpb[k+1]);
+                         jmp_abs = &kscpb[k+2];
+                         count++;
+                 }
+         }
         /* the point of this function is to calculate the relative address from the
          * memory locations given by the labels je0, je1, jmp0, which the compiler will
          * insert through the clever stackexchange post found by @krackers.
@@ -99,63 +114,54 @@ static void computeRelativeAddressesAndOverwrite() {
          * that we find using inline asm.
          * addresses are correct now.
          */
-
+#ifdef __LP64__
         int64_t absAddr = 0;
+#else
+        int32_t absAddr = 0;
+#endif
+        
 #ifdef DEBUG
         //ensure that the label of je0 printed here is in agreement with the
         //debug print loop that prints 128 bytes of memory starting at the trampoline function.
         asm ("movabs $je0, %0 \n\t"
              : "=r" (absAddr)
              );
-        IOLog("inCheckt107::%s: je0 absolute: %llx\n", __func__, absAddr);
+        IOLog("YellowTrampoline::%s: je0 absolute: %llx\n", __func__, absAddr);
         absAddr = 0;
 #endif
         
         asm ("movabs $je0, %0 \n\t"
              : "=r" (absAddr)
              );
-#ifdef __LP64__
-        absAddr = 0xffffff8000536a12 - (absAddr + 5);
-#else
-        absAddr = 0x55671b - (absAddr + 5);
-#endif
-        je0_rel = (int32_t) absAddr;
+        je0_rel = (int32_t) (je_abs - (absAddr + 5));
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
+        IOLog("YellowTrampoline::%s: je0 absolute: %llx, 32bit: %x\n", __func__, absAddr, je0_rel);
 #endif
+        
         absAddr = 0;
         asm ("movabs $je1, %0 \n\t"
              : "=r" (absAddr)
              );
-#ifdef __LP64__
-        absAddr = 0xffffff8000536a12 - (absAddr + 5);
-#else
-        absAddr = 0x55671b - (absAddr + 5);
-#endif
-        je1_rel = (int32_t) absAddr;
+        je1_rel = (int32_t) (je_abs - (absAddr + 5));
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
+        IOLog("YellowTrampoline::%s: je1 absolute: %llx, 32bit: %x\n", __func__, absAddr, je1_rel);
 #endif
+        
         absAddr = 0;
         asm ("movabs $jmp0, %0 \n\t"
              : "=r" (absAddr)
              );
-#ifdef __LP64__
-        absAddr = 0xffffff80005369f9 - (absAddr + 5);
-#else
-        absAddr = 0x00556704 - (absAddr + 5);
-#endif
-        jmp0_rel = (int32_t) absAddr;
+        jmp0_rel = (int32_t) (jmp_abs - (absAddr + 5));
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
+        IOLog("YellowTrampoline::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
 #endif
         
         //commence overwriting
         
-        int count = 0;
+        count = 0;
         uint8_t *matchOpCodeBytes =  (uint8_t*) &injectInstructions;
         for (int k=0; k<64;k++) {
-                //  IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
+                //  IOLog("YellowTrampoline::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
                 if(matchOpCodeBytes[k] == 0x0f && matchOpCodeBytes[k+1] == 0x84 && !count) {
                         memcpy(&matchOpCodeBytes[k]+2, &je0_rel, sizeof(je0_rel));
                         count++;
@@ -172,7 +178,7 @@ static void computeRelativeAddressesAndOverwrite() {
         
 }
 
-kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
+kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
 {
         char kernelVersion[128];
         size_t kernelVersionStringLength = 128;
@@ -187,12 +193,12 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                 int kernelMayja;
                 sscanf(kernelVersion, "%d.%*d.%*d", &kernelMayja);
                 if(kernelMayja > 11) {
-                        IOLog("inCheckt107:: System is Mountain Lion or newer. Extension not required.");
+                        IOLog("YellowTrampoline:: System is Mountain Lion or newer. Extension not required.");
                         return KERN_ABORTED;
                 } else
-                        IOLog("inCheckt107:: Lion or lower detected %s (Mayja %d). STARTING\n", kernelVersion, kernelMayja);
+                        IOLog("YellowTrampoline:: Lion or lower detected %s (Mayja %d). STARTING\n", kernelVersion, kernelMayja);
         } else {
-                IOLog("inCheckt107:: Could not get operating system version, terminating.");
+                IOLog("YellowTrampoline:: Could not get operating system version, terminating.");
                 return KERN_ABORTED;
         }
         kernel_base = get_kernel_base();
@@ -203,7 +209,6 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                 kqueue_scan_continue_panic_start_location = kernel_base + possible_kqueue_scan_continue_panic_start_locations[i];
                 kqueue_scan_continue_panic_end_location = kernel_base + possible_kqueue_scan_continue_panic_end_locations[i];
                 memcpy(search_bytes, possible_search_bytes[i], sizeof(search_bytes));
-                //memcpy(replacement_bytes, possible_replacement_bytes[i], sizeof(replacement_bytes));
                 
                 kscpb = (uint8_t*) kqueue_scan_continue_panic_start_location;
                 originAddress = kqueue_scan_continue_panic_start_location;
@@ -211,12 +216,12 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
                         break;
                 }
                 if (i == LENGTH(possible_kqueue_scan_continue_panic_start_locations) - 1) {
-                        IOLog("inCheckt107::%s: Memory region not found. You are probably using an unsupported kernel, or your kernel has already been patched.\n", __func__);
+                        IOLog("YellowTrampoline::%s: Memory region not found. You are probably using an unsupported kernel, or your kernel has already been patched.\n", __func__);
                         return KERN_FAILURE;
                 }
         }
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
+        IOLog("YellowTrampoline::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
@@ -225,7 +230,7 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         unsigned long extra_space_to_fill = kqueue_scan_continue_panic_end_location - kqueue_scan_continue_panic_start_location - sizeof(replacement_bytes);
         
         if (kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location) {
-                IOLog("inCheckt107::%s: kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location\n", __func__);
+                IOLog("YellowTrampoline::%s: kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location\n", __func__);
                 return KERN_FAILURE;
         }
         
@@ -246,13 +251,13 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
 #ifdef INSERT_TRAP
         while (true) {
                 
-                IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+                IOLog("YellowTrampoline::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
                 if (*matchOpCodeBytes == 0x0F && matchOpCodeBytes[1] == 0x0B) // 0x0F 0x0B is a trap code
                         break;
                 matchOpCodeBytes += 1;
                 byteCount += 1;
         }
-        IOLog("inCheckt107::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
+        IOLog("YellowTrampoline::%s: Trap at %llx\n", __func__, (long long) funcAddr + byteCount);
         byteCount = 0;
 #endif
         
@@ -266,12 +271,11 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         TheLadyIsAVamp(funcAddr, "AFTER");
 #endif
         //commence memory rewriting
-        IOLog("inCheckt107::%s: Jumping to Dummy function\n", __func__);
         matchOpCodeBytes = (uint8_t*)  &injectInstructions;
         byteCount = 0;
         while (true) {
 #ifdef DEBUG
-                IOLog("inCheckt107::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
+                IOLog("YellowTrampoline::%s:: %llx %02x\n", __func__, funcAddr + byteCount, *matchOpCodeBytes);
 #endif
                 if (*matchOpCodeBytes == (unsigned char) 0x90 && matchOpCodeBytes[1] == (unsigned char) 0x90) // 2 nops in a row, we're probably after the prologue
                         break;
@@ -281,9 +285,9 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         uint32_t pcDelta = (funcAddr + byteCount) - originAddress;
         
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
-        IOLog("inCheckt107::%s: current %llx\n", __func__, originAddress);
-        IOLog("inCheckt107::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
+        IOLog("YellowTrampoline::%s: funcAddr: %llx, real start %llx\n", __func__, funcAddr, funcAddr + byteCount);
+        IOLog("YellowTrampoline::%s: current %llx\n", __func__, originAddress);
+        IOLog("YellowTrampoline::%s: Offset is %x, full %llx\n", __func__, pcDelta, (funcAddr + byteCount) - originAddress);
 #endif
         
         /* presumably have to subtract 5 bytes to save/offset something in the counter,
@@ -312,7 +316,7 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
         
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: Post-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
+        IOLog("YellowTrampoline::%s: Post-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
@@ -321,15 +325,15 @@ kern_return_t inCheckt107_start(kmod_info_t * ki, void *d)
         return KERN_SUCCESS;
 }
 
-kern_return_t inCheckt107_stop(kmod_info_t *ki, void *d)
+kern_return_t YellowTrampoline_stop(kmod_info_t *ki, void *d)
 {
         //should write back the old shit.
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
         memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
-        IOLog("inCheckt107::%s: STOP\n", __func__);
+        IOLog("YellowTrampoline::%s: Unloading\n", __func__);
 #ifdef DEBUG
-        IOLog("inCheckt107::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
+        IOLog("YellowTrampoline::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
