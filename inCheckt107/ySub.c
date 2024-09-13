@@ -93,20 +93,20 @@ static void injectInstructions() {
 static void computeRelativeAddressesAndOverwrite() {
 
 #ifdef __LP64__
-        int64_t je_abs, jmp_abs;
+        int64_t je_abs=0, jmp_abs=0;
 #else
-        int32_t je_abs, jmp_abs;
+        int32_t je_abs=0, jmp_abs=0;
 #endif
-        int count = 0;
+        uint8_t *scanStart = (uint8_t*) originAddress;
+        int32_t je0_rel=0, je1_rel=0, jmp0_rel=0;
          for (int k=0; k<64;k++) {
-                 if(count==1)
+                 if(scanStart[k] == 0x74) {
+                         je_abs = (&scanStart[k+2] + scanStart[k+1]);
+                         jmp_abs = &scanStart[k+2];
                          break;
-                 if(kscpb[k] == 0x74 && !count) {
-                         je_abs = (&kscpb[k+2] + kscpb[k+1]);
-                         jmp_abs = &kscpb[k+2];
-                         count++;
                  }
          }
+
         /* the point of this function is to calculate the relative address from the
          * memory locations given by the labels je0, je1, jmp0, which the compiler will
          * insert through the clever stackexchange post found by @krackers.
@@ -158,7 +158,7 @@ static void computeRelativeAddressesAndOverwrite() {
         
         //commence overwriting
         
-        count = 0;
+        int count = 0;
         uint8_t *matchOpCodeBytes =  (uint8_t*) &injectInstructions;
         for (int k=0; k<64;k++) {
                 //  IOLog("YellowTrampoline::%s:: %llx %02x\n", __func__, funcAddr + byteCount, matchOpCodeBytes[k]);
@@ -173,46 +173,28 @@ static void computeRelativeAddressesAndOverwrite() {
                 else if(matchOpCodeBytes[k] == 0xe9 && count == 2) {
                         memcpy(&matchOpCodeBytes[k]+1, &jmp0_rel, sizeof(jmp0_rel));
                         count++;
-                }
+                } else if(count > 2)
+                        break; // we done
+                
         }
         
 }
 
 kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
 {
-        char kernelVersion[128];
-        size_t kernelVersionStringLength = 128;
-        sysctlbyname("kern.osrelease", &kernelVersion, &kernelVersionStringLength, NULL, 0);
-        //"unsafe bla blah bla" fucking sue me. APPUL makes the simplest shit SO FUCKING HARD SERIOUSLY
-        //read this lol: https://stackoverflow.com/questions/11072804
-        //over thirty fucking years and these guys couldn't develop a consistent approach from day one?
-        if(strlen(kernelVersion)) {
-                //well, this is why i say "unsafe bla bla bla"!
-                //      G F Y.
-                //    GO REDSKINS
-                int kernelMayja;
-                sscanf(kernelVersion, "%d.%*d.%*d", &kernelMayja);
-                if(kernelMayja > 11) {
-                        IOLog("YellowTrampoline:: System is Mountain Lion or newer. Extension not required.");
-                        return KERN_ABORTED;
-                } else
-                        IOLog("YellowTrampoline:: Lion or lower detected %s (Mayja %d). STARTING\n", kernelVersion, kernelMayja);
-        } else {
-                IOLog("YellowTrampoline:: Could not get operating system version, terminating.");
-                return KERN_ABORTED;
-        }
-        kernel_base = get_kernel_base();
-        char search_bytes[sizeof(possible_search_bytes[0])];
+        if(checkKernelVersion() != KERN_SUCCESS)
+                return KERN_FAILURE;
+        
+        vm_offset_t kernel_base = get_kernel_base();
+        char search_bytes[4];
         
         
         for (int i = 0; i < LENGTH(possible_kqueue_scan_continue_panic_start_locations); i++) {
-                kqueue_scan_continue_panic_start_location = kernel_base + possible_kqueue_scan_continue_panic_start_locations[i];
-                kqueue_scan_continue_panic_end_location = kernel_base + possible_kqueue_scan_continue_panic_end_locations[i];
+                bzero(search_bytes, 4);
+                originAddress = kernel_base + possible_kqueue_scan_continue_panic_start_locations[i];
                 memcpy(search_bytes, possible_search_bytes[i], sizeof(search_bytes));
                 
-                kscpb = (uint8_t*) kqueue_scan_continue_panic_start_location;
-                originAddress = kqueue_scan_continue_panic_start_location;
-                if (memcmp(kscpb, search_bytes, sizeof(search_bytes)) == 0) {
+                if (memcmp((void*) originAddress, search_bytes, sizeof(search_bytes)) == 0) {
                         break;
                 }
                 if (i == LENGTH(possible_kqueue_scan_continue_panic_start_locations) - 1) {
@@ -222,17 +204,12 @@ kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
         }
 #ifdef DEBUG
         IOLog("YellowTrampoline::%s: Pre-Patch: Bytes at kqueue_scan_continue panic location: ", __func__);
+        uint8_t *kscpb = (uint8_t*) originAddress;
         for (int k=0; k < 39; k ++)
                 IOLog(" %02x", kscpb[k]);
         IOLog(" %02x\n", kscpb[39]);
 #endif
         
-        unsigned long extra_space_to_fill = kqueue_scan_continue_panic_end_location - kqueue_scan_continue_panic_start_location - sizeof(replacement_bytes);
-        
-        if (kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location) {
-                IOLog("YellowTrampoline::%s: kqueue_scan_continue_panic_start_location + sizeof(replacement_bytes) + extra_space_to_fill != kqueue_scan_continue_panic_end_location\n", __func__);
-                return KERN_FAILURE;
-        }
         
         interrupt_status = ml_get_interrupts_enabled();
         write_protection_status = write_protection_is_enabled();
@@ -241,7 +218,6 @@ kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
                 return KERN_FAILURE;
         
         long long funcAddr = (long long) &injectInstructions;
-        
         uint8_t *matchOpCodeBytes = (uint8_t*) &injectInstructions;
         long long byteCount = 0;
         
@@ -296,7 +272,7 @@ kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
          */
         pcDelta -= 5;
         //save original bytes first
-        memcpy(&original_bytes[0], (void *)kqueue_scan_continue_panic_start_location, sizeof(original_bytes));
+        memcpy(&original_bytes[0], (void *)originAddress, sizeof(original_bytes));
         
         //create new jmp asm instruction.
         memset(&replacement_bytes[0], 0x90, sizeof(replacement_bytes));
@@ -310,7 +286,7 @@ kern_return_t YellowTrampoline_start(kmod_info_t * ki, void *d)
          *  ffffff80005369f3         cmp        dword [ss:rbp+var_44], 0x0
          *  ffffff80005369f7         je         0xffffff8000536a12
          */
-        memcpy((void *)kqueue_scan_continue_panic_start_location, replacement_bytes, sizeof(replacement_bytes));
+        memcpy((void *)originAddress, replacement_bytes, sizeof(replacement_bytes));
         
         //conclude memory rewriting
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
@@ -329,14 +305,9 @@ kern_return_t YellowTrampoline_stop(kmod_info_t *ki, void *d)
 {
         //should write back the old shit.
         disableInterruptsAndProtection(interrupt_status, write_protection_status);
-        memcpy((void *)kqueue_scan_continue_panic_start_location, &original_bytes, sizeof(original_bytes));
+        memcpy((void *)originAddress, &original_bytes, sizeof(original_bytes));
         enableInterruptsAndProtection(interrupt_status, write_protection_status);
         IOLog("YellowTrampoline::%s: Unloading\n", __func__);
-#ifdef DEBUG
-        IOLog("YellowTrampoline::%s: UNLOAD: Bytes at kqueue_scan_continue panic location: ", __func__);
-        for (int k=0; k < 39; k ++)
-                IOLog(" %02x", kscpb[k]);
-        IOLog(" %02x\n", kscpb[39]);
-#endif
+
         return KERN_SUCCESS;
 }

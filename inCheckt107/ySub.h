@@ -30,13 +30,6 @@ static vm_offset_t possible_kqueue_scan_continue_panic_start_locations[NUM_SUPPO
         0x005566fb,         //10.7.5 11G63, xnu-1699.32.7 (32 bit)
 #endif
 };
-static vm_offset_t possible_kqueue_scan_continue_panic_end_locations[NUM_SUPPORTED_KERNELS] = {
-#if __LP64__
-        0xffffff80005369f9, //10.7.5 11G63, xnu-1699.32.7
-#else
-        0x00556704,         //10.7.5 11G63, xnu-1699.32.7 (32 bit)
-#endif
-};
 
 static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 #if __LP64__
@@ -57,20 +50,12 @@ static char possible_search_bytes[NUM_SUPPORTED_KERNELS][4] = {
 //};
 //
 
-static size_t KASLRAlignment = 0x100000;
-static vm_offset_t kernel_base;
-static vm_offset_t kqueue_scan_continue_panic_start_location = 0;
-static vm_offset_t kqueue_scan_continue_panic_end_location = 0;
-static char replacement_bytes[10];
-static char original_bytes[10];
+
+static long long originAddress  = 0;
 static boolean_t interrupt_status = 0;
 static boolean_t write_protection_status = 0;
-static uint8_t *kscpb = NULL;
-static long long originAddress;
-int32_t je0_rel, je1_rel, jmp0_rel;
-// Taken from Hopper
 
-extern void IOLog(const char *format, ...)
-__attribute__((format(printf, 1, 2)));
+static char replacement_bytes[10];
+static char original_bytes[10];
 
 #endif /* inCheckt107_h */

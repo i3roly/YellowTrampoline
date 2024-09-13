@@ -67,6 +67,8 @@ static void enableInterruptsAndProtection(boolean_t interrupts_were_enabled, boo
 
 // Adapted from github.com/acidanthera/Lilu/blob/137b4d9deb7022bb97fa9899303934534ff20ec7/Lilu/Sources/kern_mach.cpp
 static vm_offset_t get_kernel_base() {
+        static size_t KASLRAlignment = 0x100000;
+        
 #if __LP64__
         // The function choice is mostly arbitrary, but IOLog frequently has a low address.
         vm_offset_t tmp = (vm_offset_t)(IOLog);
@@ -106,4 +108,32 @@ static void TheLadyIsAVamp (long long VampsHomePhone, char *where) {
                 byteCount += 1;
                 
         }
+}
+
+static IOReturn checkKernelVersion() {
+        IOReturn retVal;
+        char kernelVersion[128];
+        size_t kernelVersionStringLength = 128;
+        sysctlbyname("kern.osrelease", &kernelVersion, &kernelVersionStringLength, NULL, 0);
+        //"unsafe bla blah bla" fucking sue me. APPUL makes the simplest shit SO FUCKING HARD SERIOUSLY
+        //read this lol: https://stackoverflow.com/questions/11072804
+        //over thirty fucking years and these guys couldn't develop a consistent approach from day one?
+        if(strlen(kernelVersion)) {
+                //well, this is why i say "unsafe bla bla bla"!
+                //      G F Y.
+                //    GO REDSKINS
+                int kernelMayja;
+                sscanf(kernelVersion, "%d.%*d.%*d", &kernelMayja);
+                if(kernelMayja > 11) {
+                        IOLog("YellowTrampoline:: System is Mountain Lion or newer. Extension not required.");
+                        retVal = KERN_ABORTED;
+                } else {
+                        IOLog("YellowTrampoline:: Lion or lower detected %s (Mayja %d). STARTING\n", kernelVersion, kernelMayja);
+                        retVal = KERN_SUCCESS;
+                }
+        } else {
+                IOLog("YellowTrampoline:: Could not get operating system version, terminating.");
+                retVal = KERN_ABORTED;
+        }
+        return retVal;
 }
