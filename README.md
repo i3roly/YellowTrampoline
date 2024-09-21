@@ -52,3 +52,8 @@ this kext is a product of all of that, i guess.
 
 now we have a nice/clean injector, i have to figure out how to package it tidily and only activate it on sub 10.8 boxes :>
 
+oh and, if you REALLY have to ask why the kext identifier is 'com.gagz.gfy.goredskins'....
+
+
+https://github.com/user-attachments/assets/a4c65a89-8fba-42a4-b549-71d44452f7fc
+
