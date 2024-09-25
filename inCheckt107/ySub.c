@@ -13,12 +13,6 @@ static void injectInstructions() {
 #ifdef __LP64__
         __asm__("nop");
         __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
         //IOLog("YellowTrampoline::%s: Success\n", __func__);
 #ifdef INSERT_TRAP
         __builtin_trap();
@@ -42,14 +36,7 @@ static void injectInstructions() {
         __asm__("jmp0:");
         __asm__(".intel_syntax noprefix\t\n"
                 "jmp        [0xffffff90909090]");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
+
 #else
         // Add a bunch of nops so there is enough dead space in your func
         __asm__("nop");
@@ -78,34 +65,16 @@ static void injectInstructions() {
         __asm__("jmp0:");
         __asm__(".intel_syntax noprefix \t\n"
                 "jmp        [0x90]");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
-        __asm__("nop");
+
 #endif
-        
+                __asm__("nop");
+                __asm__("nop");
+                __asm__("nop");
+                __asm__("nop");
+
 }
 
 static void computeRelativeAddressesAndOverwrite() {
-
-#ifdef __LP64__
-        int64_t je_abs=0, jmp_abs=0;
-#else
-        int32_t je_abs=0, jmp_abs=0;
-#endif
-        uint8_t *scanStart = (uint8_t*) originAddress;
-        int32_t je0_rel=0, je1_rel=0, jmp0_rel=0;
-         for (int k=0; k<64;k++) {
-                 if(scanStart[k] == 0x74) {
-                         je_abs = (&scanStart[k+2] + scanStart[k+1]);
-                         jmp_abs = &scanStart[k+2];
-                         break;
-                 }
-         }
 
         /* the point of this function is to calculate the relative address from the
          * memory locations given by the labels je0, je1, jmp0, which the compiler will
@@ -114,6 +83,24 @@ static void computeRelativeAddressesAndOverwrite() {
          * that we find using inline asm.
          * addresses are correct now.
          */
+#ifdef __LP64__
+        int64_t je_abs=0, jmp_abs=0;
+#else
+        int32_t je_abs=0, jmp_abs=0;
+#endif
+        uint8_t *scanStart = (uint8_t*) originAddress;
+        int32_t je0_rel=0, je1_rel=0, jmp0_rel=0;
+        for (int k=0; k<64;k++) {
+                if(scanStart[k] == 0x74) {
+                        je_abs = originAddress + scanStart[k+1] + 10; // offset both by length of replacement bytes, but add the relative position from the end of the replacement bytes for the je
+                        jmp_abs = originAddress + 10; //this one is literally jumping to the first instruction after our replacement string, so it doesn't need a relative position.
+                        break;
+                }
+        }
+
+#ifdef DEBUG
+        IOLog("YellowTrampoline::%s: je_abs: %llx jmp_abs: %llx\n", __func__, je_abs, jmp_abs);
+#endif
 #ifdef __LP64__
         int64_t absAddr = 0;
 #else
@@ -155,7 +142,7 @@ static void computeRelativeAddressesAndOverwrite() {
 #ifdef DEBUG
         IOLog("YellowTrampoline::%s: jmp0 absolute: %llx, 32bit: %x\n", __func__, absAddr, jmp0_rel);
 #endif
-        
+
         //commence overwriting
         
         int count = 0;
